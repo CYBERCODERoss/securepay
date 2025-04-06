@@ -1,0 +1,113 @@
+# dependencies
+node_modules/
+**/node_modules/
+.pnp/
+.pnp.js
+
+# testing
+coverage/
+**/coverage/
+
+# production build files
+build/
+dist/
+**/build/
+**/dist/
+
+# environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+**/.env
+**/.env.*
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# Docker
+.docker/data
+.dockerignore
+
+# IDE and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.sublime*
+*.code-workspace
+
+# misc
+.DS_Store
+.npmrc
+.yarnrc
+.cache/
+temp/
+tmp/
+.next/
+.nuxt/
+.serverless/
+
+# Databases
+*.sqlite
+*.db
+
+# Docker volume data
+data/
+!data/.gitkeep
+
+# General
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.log
+logs/
+tmp/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Frontend
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage/
+frontend/build/
+frontend/dist/
+frontend/.cache/
+
+# Backend
+backend/**/vendor/
+backend/**/__debug_bin
+backend/**/*.exe
+backend/**/*.exe~
+backend/**/*.dll
+backend/**/*.so
+backend/**/*.dylib
+backend/**/*.test
+backend/**/*.out
+backend/**/go.work
+backend/**/go.work.sum
+
+# Infrastructure
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.backup
+infra/terraform/*.tfvars
+infra/terraform/.terragrunt-cache/
+infra/terraform/crash.log
+
+# Kubernetes
+kubeconfig
+
+# Docker
+.dockerignore 
