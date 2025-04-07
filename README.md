@@ -1,7 +1,7 @@
 # SecurePay 🔐💳
 
 <p align="center">
-  <img src="frontend/public/logo512.png" alt="SecurePay Logo" width="200" />
+  <img src="frontend/public/assets/logo.svg" alt="SecurePay Logo" width="200" />
 </p>
 
 <p align="center">
@@ -75,7 +75,7 @@ SecurePay follows a microservices architecture with the following components:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/securepay.git
+   git clone https://github.com/CYBERCODERoss/securepay.git
    cd securepay
    ```
 
