@@ -1,7 +1,7 @@
 # SecurePay 🔐💳
 
 <p align="center">
-  <img src="frontend/public/assets/logo.svg" alt="SecurePay Logo" width="200" />
+  <img src="frontend/src/assets/logo.svg" alt="SecurePay Logo" width="200" />
 </p>
 
 <p align="center">
