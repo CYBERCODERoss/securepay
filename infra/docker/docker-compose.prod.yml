@@ -17,62 +17,58 @@ services:
     networks:
       - securepay-network
     depends_on:
-      - api-gateway
+      - backend
       - frontend
-
-  # API Gateway Service
-  api-gateway:
-    build:
-      context: ../../backend/api-gateway
-      dockerfile: Dockerfile
-    container_name: securepay-api-gateway
-    environment:
-      - PORT=8080
-      - PAYMENT_SERVICE_URL=http://payment-service:8081
-      - AUTH_SERVICE_URL=http://auth-service:8082
-      - TRANSACTION_SERVICE_URL=http://transaction-service:8083
-      - USER_SERVICE_URL=http://user-service:8084
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
-      - ENV=production
-      - LOG_LEVEL=info
-    restart: unless-stopped
-    networks:
-      - securepay-network
-    depends_on:
-      - payment-service
-      - postgres
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "5"
 
-  # Payment Service
-  payment-service:
+  # Backend Service
+  backend:
     build:
-      context: ../../backend/payment
+      context: ../../backend
       dockerfile: Dockerfile
-    container_name: securepay-payment-service
+    container_name: securepay-backend
     environment:
-      - PORT=8081
+      - NODE_ENV=production
+      - PORT=3000
       - DB_HOST=postgres
       - DB_PORT=5432
+      - DB_NAME=securepay
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=securepay_payments
-      - STRIPE_API_KEY=${STRIPE_API_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - LOG_LEVEL=info
     restart: unless-stopped
     networks:
       - securepay-network
     depends_on:
       - postgres
+      - redis
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${API_URL}
+    container_name: securepay-frontend
+    volumes:
+      - static_content:/usr/share/nginx/html
+    restart: unless-stopped
+    networks:
+      - securepay-network
     logging:
       driver: "json-file"
       options:
@@ -81,15 +77,14 @@ services:
 
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:14-alpine
     container_name: securepay-postgres
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_MULTIPLE_DATABASES=securepay_payments,securepay_auth,securepay_transactions,securepay_users
+      - POSTGRES_DB=securepay
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../../infra/database/init-multiple-db.sh:/docker-entrypoint-initdb.d/init-multiple-db.sh
     restart: unless-stopped
     networks:
       - securepay-network
@@ -103,26 +98,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Frontend Application
-  frontend:
-    build:
-      context: ../../frontend
-      dockerfile: Dockerfile
-      args:
-        - REACT_APP_API_URL=${API_URL}
-        - REACT_APP_STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
-    container_name: securepay-frontend
-    volumes:
-      - static_content:/usr/share/nginx/html
-    restart: unless-stopped
-    networks:
-      - securepay-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
 
   # Redis for caching and session management
   redis:

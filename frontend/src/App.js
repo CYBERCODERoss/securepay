@@ -34,7 +34,7 @@ const AppContent = () => {
       // Give a little extra time for the splash screen
       const timer = setTimeout(() => {
         setShowSplash(false);
-      }, 1000); // Ensures splash screen shows for at least 1 second after auth check
+      }, 100); // Ensures splash screen shows for at least 1 second after auth check
 
       return () => clearTimeout(timer);
     }

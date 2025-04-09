@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Grid, 
@@ -18,7 +18,8 @@ import {
   IconButton,
   Stack,
   Divider,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import { 
   ArrowUpward, 
@@ -47,7 +48,8 @@ import {
   ArcElement,
   Filler
 } from 'chart.js';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Bar, Doughnut, Scatter } from 'react-chartjs-2';
+import { getDashboardStats, getTransactions, getPaymentMethods, getRevenueData } from '../services/api';
 
 // Register ChartJS components
 ChartJS.register(
@@ -72,7 +74,7 @@ const transactionData = [
   { id: 5, customer: 'James Davis', date: '2023-05-29', amount: 190.20, status: 'failed', method: 'FPX' },
 ];
 
-// Chart data - Revenue
+// Enhanced Revenue Chart Data
 const revenueChartData = {
   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
   datasets: [
@@ -89,16 +91,61 @@ const revenueChartData = {
       pointRadius: 4,
       pointHoverRadius: 6,
     },
+    {
+      label: 'Projected Revenue',
+      data: [3200, 5700, 5100, 6800, 8800, 9500],
+      borderColor: 'rgba(46, 204, 113, 0.8)',
+      backgroundColor: 'rgba(46, 204, 113, 0.1)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: '#ffffff',
+      pointBorderColor: 'rgba(46, 204, 113, 0.8)',
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+    }
   ],
 };
 
-// Chart options - Revenue
+// Add these styles at the top level of the component
+const styles = {
+  card3D: {
+    transform: 'perspective(1000px) rotateX(5deg)',
+    transition: 'transform 0.3s ease-in-out',
+    '&:hover': {
+      transform: 'perspective(1000px) rotateX(0deg) translateY(-5px)',
+    },
+    boxShadow: '0 10px 20px rgba(0,0,0,0.1), 0 6px 6px rgba(0,0,0,0.1)',
+  },
+  chartContainer: {
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%)',
+      borderRadius: '8px',
+      pointerEvents: 'none',
+    }
+  }
+};
+
+// Enhanced Revenue Chart Options with 3D effect
 const revenueChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      display: false,
+      display: true,
+      position: 'top',
+      labels: {
+        boxWidth: 12,
+        usePointStyle: true,
+        padding: 20,
+      }
     },
     tooltip: {
       mode: 'index',
@@ -114,6 +161,11 @@ const revenueChartOptions = {
       titleFont: {
         weight: 600,
       },
+      callbacks: {
+        label: function(context) {
+          return ` ${context.dataset.label}: RM ${context.parsed.y}`;
+        }
+      }
     },
   },
   scales: {
@@ -123,6 +175,9 @@ const revenueChartOptions = {
       },
       ticks: {
         color: '#64748b',
+        font: {
+          weight: 500
+        }
       }
     },
     y: {
@@ -132,6 +187,12 @@ const revenueChartOptions = {
       },
       ticks: {
         color: '#64748b',
+        font: {
+          weight: 500
+        },
+        callback: function(value) {
+          return 'RM ' + value;
+        }
       }
     },
   },
@@ -196,31 +257,37 @@ const transactionChartOptions = {
   },
 };
 
-// Chart data - Payment Methods
+// Enhanced Payment Methods Chart with 3D effect
 const paymentMethodsData = {
-  labels: ['Credit Card', 'FPX', 'E-Wallet'],
+  labels: ['Credit Card', 'FPX', 'E-Wallet', 'Other'],
   datasets: [
     {
-      data: [55, 30, 15],
+      data: [45, 25, 20, 10],
       backgroundColor: [
         'rgba(25, 118, 210, 0.8)',
         'rgba(46, 204, 113, 0.8)',
         'rgba(155, 89, 182, 0.8)',
+        'rgba(241, 196, 15, 0.8)',
       ],
       borderWidth: 0,
       borderRadius: 4,
+      offset: 20,
     },
   ],
 };
 
-// Chart options - Payment Methods
 const paymentMethodsOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  cutout: '70%',
+  cutout: '60%',
   plugins: {
     legend: {
-      display: false,
+      display: true,
+      position: 'right',
+      labels: {
+        padding: 20,
+        usePointStyle: true,
+      }
     },
     tooltip: {
       backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -232,12 +299,141 @@ const paymentMethodsOptions = {
       usePointStyle: true,
     },
   },
+  layout: {
+    padding: 20
+  },
+  animation: {
+    animateRotate: true,
+    animateScale: true
+  }
+};
+
+// Add new Fraud Analytics Chart
+const fraudChartData = {
+  labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+  datasets: [
+    {
+      data: [65, 25, 10],
+      backgroundColor: [
+        'rgba(46, 204, 113, 0.8)',
+        'rgba(241, 196, 15, 0.8)',
+        'rgba(231, 76, 60, 0.8)',
+      ],
+      borderWidth: 0,
+      borderRadius: 4,
+    },
+  ],
+};
+
+const fraudChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom',
+    },
+    title: {
+      display: true,
+      text: 'Risk Assessment Distribution',
+      padding: {
+        top: 10,
+        bottom: 20
+      }
+    }
+  },
 };
 
 // Dashboard Component
 const Dashboard = () => {
   const theme = useTheme();
-  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    totalRevenue: 0,
+    transactionCount: 0,
+    averageSale: 0,
+    activeCustomers: 0,
+    revenueGrowth: 0,
+    transactionGrowth: 0
+  });
+  const [transactions, setTransactions] = useState([]);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [revenueData, setRevenueData] = useState({ data: [], total: 0, growth: 0 });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [stats, transData, methodsData, revData] = await Promise.all([
+          getDashboardStats(),
+          getTransactions({ limit: 5 }),
+          getPaymentMethods(),
+          getRevenueData('daily')
+        ]);
+
+        setDashboardData(stats);
+        setTransactions(transData.data);
+        setPaymentMethods(methodsData);
+        setRevenueData(revData);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch dashboard data');
+        console.error('Dashboard data fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="error" variant="h6">{error}</Typography>
+        <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
+          Retry
+        </Button>
+      </Box>
+    );
+  }
+
+  // Update the data for charts
+  const updatedRevenueChartData = {
+    ...revenueChartData,
+    datasets: [
+      {
+        ...revenueChartData.datasets[0],
+        data: revenueData.data.map(item => item.amount)
+      }
+    ]
+  };
+
+  const updatedPaymentMethodsData = {
+    labels: paymentMethods.map(method => method.name),
+    datasets: [{
+      data: paymentMethods.map(method => method.percentage),
+      backgroundColor: [
+        'rgba(25, 118, 210, 0.8)',
+        'rgba(46, 204, 113, 0.8)',
+        'rgba(155, 89, 182, 0.8)',
+        'rgba(241, 196, 15, 0.8)',
+      ],
+      borderWidth: 0,
+      borderRadius: 4,
+      offset: 20,
+    }],
+  };
+
   // Feature card component
   const FeatureCard = ({ icon, title, description, iconBg }) => (
     <Card className="feature-card">
@@ -257,8 +453,15 @@ const Dashboard = () => {
 
   // Stat card component
   const StatCard = ({ title, value, icon, change, trend, iconBg }) => (
-    <Card className="dashboard-stat-card">
-      <CardContent sx={{ p: 3 }}>
+    <Card 
+      className="dashboard-stat-card"
+      sx={{ 
+        p: 3,
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        ...styles.card3D
+      }}
+    >
+      <CardContent sx={{ p: 0 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
           <Box>
             <Typography variant="body2" sx={{ color: 'text.secondary', mb: 0.5, fontWeight: 500 }}>
@@ -268,7 +471,15 @@ const Dashboard = () => {
               {value}
             </Typography>
           </Box>
-          <Avatar sx={{ bgcolor: iconBg, width: 48, height: 48 }}>
+          <Avatar 
+            sx={{ 
+              bgcolor: iconBg, 
+              width: 48, 
+              height: 48,
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+              transform: 'translateZ(20px)'
+            }}
+          >
             {icon}
           </Avatar>
         </Box>
@@ -318,9 +529,9 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard 
             title="Total Revenue" 
-            value="RM 24,532" 
+            value={`RM ${dashboardData.totalRevenue.toFixed(2)}`}
             icon={<AttachMoney />} 
-            change="12.5%" 
+            change={`${dashboardData.revenueGrowth}%`}
             trend="up"
             iconBg="linear-gradient(135deg, #1976d2 0%, #2196f3 100%)" 
           />
@@ -328,9 +539,9 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard 
             title="Transactions" 
-            value="842" 
+            value={dashboardData.transactionCount.toString()}
             icon={<Payment />} 
-            change="8.2%" 
+            change={`${dashboardData.transactionGrowth}%`}
             trend="up"
             iconBg="linear-gradient(135deg, #2e7d32 0%, #4caf50 100%)" 
           />
@@ -338,7 +549,7 @@ const Dashboard = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard 
             title="Average Value" 
-            value="RM 145.80" 
+            value={`RM ${dashboardData.averageSale.toFixed(2)}`}
             icon={<TrendingUp />} 
             change="3.1%" 
             trend="up"
@@ -347,11 +558,11 @@ const Dashboard = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard 
-            title="Pending Payments" 
-            value="12" 
+            title="Active Customers" 
+            value={dashboardData.activeCustomers.toString()}
             icon={<Receipt />} 
-            change="2.5%" 
-            trend="down"
+            change="5.2%" 
+            trend="up"
             iconBg="linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)" 
           />
         </Grid>
@@ -360,71 +571,133 @@ const Dashboard = () => {
       {/* Charts row */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={8}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ ...styles.card3D }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Revenue Overview
                 </Typography>
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  sx={{ 
-                    borderRadius: '50px', 
-                    borderColor: 'rgba(0,0,0,0.12)',
-                    color: 'text.secondary',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      bgcolor: 'transparent'
-                    }
-                  }}
-                >
-                  Monthly
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    sx={{ 
+                      borderRadius: '50px', 
+                      borderColor: 'rgba(0,0,0,0.12)',
+                      color: 'text.secondary',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: 'transparent',
+                        transform: 'translateY(-2px)',
+                      },
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                  >
+                    Monthly
+                  </Button>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    sx={{ 
+                      borderRadius: '50px', 
+                      borderColor: 'rgba(0,0,0,0.12)',
+                      color: 'text.secondary',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        bgcolor: 'transparent',
+                        transform: 'translateY(-2px)',
+                      },
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                  >
+                    Export
+                  </Button>
+                </Box>
               </Box>
-              <Box sx={{ height: 300, position: 'relative' }}>
-                <Line data={revenueChartData} options={revenueChartOptions} />
+              <Box sx={{ ...styles.chartContainer, height: 300, position: 'relative' }}>
+                <Line data={updatedRevenueChartData} options={revenueChartOptions} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ ...styles.card3D }}>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Payment Methods
                 </Typography>
-                <IconButton size="small">
+                <IconButton 
+                  size="small"
+                  sx={{ 
+                    '&:hover': { 
+                      transform: 'rotate(180deg)',
+                      transition: 'transform 0.3s ease-in-out'
+                    }
+                  }}
+                >
                   <MoreVert fontSize="small" />
                 </IconButton>
               </Box>
-              <Box sx={{ height: 220, position: 'relative', mb: 2 }}>
-                <Doughnut data={paymentMethodsData} options={paymentMethodsOptions} />
+              <Box sx={{ ...styles.chartContainer, height: 300, position: 'relative' }}>
+                <Doughnut data={updatedPaymentMethodsData} options={paymentMethodsOptions} />
               </Box>
-              <Stack spacing={2}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, bgcolor: 'rgba(25, 118, 210, 0.8)', borderRadius: '50%', mr: 1 }} />
-                    <Typography variant="body2">Credit Card</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight={600}>55%</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, bgcolor: 'rgba(46, 204, 113, 0.8)', borderRadius: '50%', mr: 1 }} />
-                    <Typography variant="body2">FPX</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight={600}>30%</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box sx={{ width: 12, height: 12, bgcolor: 'rgba(155, 89, 182, 0.8)', borderRadius: '50%', mr: 1 }} />
-                    <Typography variant="body2">E-Wallet</Typography>
-                  </Box>
-                  <Typography variant="body2" fontWeight={600}>15%</Typography>
-                </Box>
-              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+      
+      {/* New Analytics Row */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Fraud Risk Analysis
+                </Typography>
+              </Box>
+              <Box sx={{ height: 250, position: 'relative' }}>
+                <Doughnut data={fraudChartData} options={fraudChartOptions} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Customer Growth
+                </Typography>
+              </Box>
+              <Box sx={{ height: 250, position: 'relative' }}>
+                <Bar 
+                  data={{
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                      label: 'New Customers',
+                      data: [65, 75, 85, 95, 110, 125],
+                      backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                      borderRadius: 6,
+                    }]
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false
+                      }
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true
+                      }
+                    }
+                  }}
+                />
+              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -458,7 +731,7 @@ const Dashboard = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactionData.map((transaction) => (
+                {transactions.map((transaction) => (
                   <TableRow key={transaction.id} hover className="transaction-item">
                     <TableCell>
                       <Typography variant="body2" fontWeight={500}>
@@ -467,7 +740,7 @@ const Dashboard = () => {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {transaction.date}
+                        {new Date(transaction.date).toLocaleDateString()}
                       </Typography>
                     </TableCell>
                     <TableCell>
