@@ -17,7 +17,14 @@ import {
   Avatar,
   Menu,
   MenuItem,
-  Badge
+  Badge,
+  Typography,
+  Button,
+  Stack,
+  Chip,
+  Tab,
+  Tabs,
+  ButtonGroup
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -30,22 +37,32 @@ import {
   ExitToApp as LogoutIcon,
   Store as StoreIcon,
   Security as SecurityIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  CalendarToday as CalendarIcon,
+  Tune as TuneIcon,
+  FilterList as FilterIcon,
+  ViewDay as ViewDayIcon,
+  ViewModule as ViewModuleIcon,
+  MoreVert as MoreVertIcon,
+  Search as SearchIcon,
+  DateRange as DateRangeIcon
 } from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import useAuth from '../hooks/useAuth';
 import Logo from './Logo';
+import Navigation from './Navigation';
 
-const drawerWidth = 260;
+const drawerWidth = 240;
 
 // Styled components
 const StyledAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open, isMobile }) => ({
   zIndex: theme.zIndex.drawer + 1,
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: theme.palette.background.default,
+  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
   color: theme.palette.text.primary,
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+  boxShadow: 'none',
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -67,84 +84,27 @@ const StyledDrawer = styled(Drawer, {
   flexShrink: 0,
   whiteSpace: 'nowrap',
   boxSizing: 'border-box',
-  ...(open && {
+  '& .MuiDrawer-paper': {
+    border: 'none',
+    boxShadow: 'none',
+    backgroundColor: theme.palette.background.paper,
+    color: theme.palette.text.primary,
     width: drawerWidth,
     transition: theme.transitions.create('width', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.enteringScreen,
     }),
-    '& .MuiDrawer-paper': {
+    overflowX: 'hidden',
+    ...(isMobile && {
       width: drawerWidth,
-      backgroundColor: theme.palette.background.default,
-      boxShadow: '4px 0 20px rgba(0, 0, 0, 0.05)',
-      border: 'none',
-      position: 'relative',
-      overflowX: 'hidden',
-      transition: theme.transitions.create('width', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
-    },
-  }),
-  ...(!open && !isMobile && {
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
     }),
-    width: theme.spacing(7),
-    '& .MuiDrawer-paper': {
+    ...(!open && !isMobile && {
       transition: theme.transitions.create('width', {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.leavingScreen,
       }),
-      overflowX: 'hidden',
       width: theme.spacing(7),
-      backgroundColor: theme.palette.background.default,
-      boxShadow: '4px 0 20px rgba(0, 0, 0, 0.05)',
-      border: 'none',
-    },
-  }),
-}));
-
-const StyledMenuItem = styled(ListItem)(({ theme, active }) => ({
-  margin: theme.spacing(0.8, 1.5),
-  padding: theme.spacing(0.8, 2),
-  borderRadius: theme.shape.borderRadius * 2,
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  position: 'relative',
-  overflow: 'hidden',
-  
-  ...(active && {
-    backgroundColor: theme.palette.primary.main,
-    boxShadow: `0 4px 20px ${theme.palette.primary.main}40`,
-    
-    '& .MuiListItemIcon-root, & .MuiListItemText-primary': {
-      color: theme.palette.common.white,
-      fontWeight: 600,
-    },
-  }),
-  
-  ...(!active && {
-    '&:hover': {
-      backgroundColor: theme.palette.primary.light + '20',
-      transform: 'translateX(5px)',
-      
-      '& .MuiListItemIcon-root': {
-        color: theme.palette.primary.main,
-      },
-      
-      '& .MuiListItemText-primary': {
-        color: theme.palette.primary.main,
-      },
-    },
-  }),
-}));
-
-const NotificationBadge = styled(Badge)(({ theme }) => ({
-  '& .MuiBadge-badge': {
-    backgroundColor: theme.palette.error.main,
-    color: theme.palette.common.white,
-    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+    }),
   },
 }));
 
@@ -152,7 +112,7 @@ const MainContent = styled(Box, {
   shouldForwardProp: (prop) => !['open', 'isMobile'].includes(prop),
 })(({ theme, open, isMobile }) => ({
   flexGrow: 1,
-  padding: theme.spacing(3),
+  padding: 0,
   backgroundColor: theme.palette.background.default,
   minHeight: '100vh',
   transition: theme.transitions.create('margin', {
@@ -169,6 +129,59 @@ const MainContent = styled(Box, {
   }),
 }));
 
+const PageHeader = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(3, 4),
+  display: 'flex',
+  flexDirection: 'column',
+  gap: theme.spacing(2),
+  borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+}));
+
+const PageTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: 600,
+  fontSize: '1.5rem',
+  color: theme.palette.text.primary,
+}));
+
+const FilterButton = styled(Button)(({ theme }) => ({
+  backgroundColor: alpha(theme.palette.common.white, 0.05),
+  color: theme.palette.text.primary,
+  textTransform: 'none',
+  borderRadius: 6,
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  padding: theme.spacing(0.75, 2),
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.common.white, 0.1),
+  }
+}));
+
+const ViewToggleButton = styled(IconButton)(({ theme }) => ({
+  backgroundColor: alpha(theme.palette.common.white, 0.05),
+  color: theme.palette.text.primary,
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.common.white, 0.1),
+  }
+}));
+
+const ContentContainer = styled(Container)(({ theme }) => ({
+  padding: theme.spacing(3),
+  maxWidth: 'none',
+}));
+
+const PeriodTab = styled(Tab)(({ theme }) => ({
+  color: theme.palette.text.secondary,
+  fontWeight: 500,
+  fontSize: '0.875rem',
+  minWidth: 'auto',
+  padding: theme.spacing(1, 2),
+  textTransform: 'none',
+  '&.Mui-selected': {
+    color: theme.palette.primary.main,
+    fontWeight: 600,
+  }
+}));
+
 const Layout = () => {
   const theme = useTheme();
   const location = useLocation();
@@ -177,18 +190,8 @@ const Layout = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [open, setOpen] = useState(!isMobile);
   const [anchorEl, setAnchorEl] = useState(null);
-
-  // Menu items data
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'Payments', icon: <PaymentIcon />, path: '/dashboard/payments' },
-    { text: 'Transactions', icon: <ReceiptIcon />, path: '/dashboard/transactions' },
-    { text: 'Shop', icon: <StoreIcon />, path: '/shop' },
-    { text: 'Subscriptions', icon: <CreditCardIcon />, path: '/dashboard/subscriptions' },
-    { text: 'Security', icon: <SecurityIcon />, path: '/dashboard/security' },
-    { text: 'Settings', icon: <SettingsIcon />, path: '/dashboard/settings' },
-    { text: 'Fraud Protection', icon: <SecurityIcon />, path: '/dashboard/fraud-protection' },
-  ];
+  const [periodValue, setPeriodValue] = useState(0);
+  const [viewType, setViewType] = useState('table');
 
   // Handle responsive drawer
   useEffect(() => {
@@ -213,6 +216,20 @@ const Layout = () => {
     navigate('/login');
   };
 
+  const handlePeriodChange = (event, newValue) => {
+    setPeriodValue(newValue);
+  };
+
+  const handleViewChange = (type) => {
+    setViewType(type);
+  };
+
+  // Get current page title based on location
+  const getPageTitle = () => {
+    const path = location.pathname.split('/').filter(x => x)[0] || 'dashboard';
+    return path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, ' ');
+  };
+
   // Get user initials for avatar
   const getUserInitials = () => {
     if (user?.name) {
@@ -221,16 +238,11 @@ const Layout = () => {
     return 'U';
   };
 
-  // Check if current path matches menu item path
-  const isPathActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-
   return (
     <Box sx={{ display: 'flex' }}>
       {/* App Bar */}
       <StyledAppBar position="fixed" open={open} isMobile={isMobile}>
-        <Toolbar>
+        <Toolbar sx={{ px: 2 }}>
           <IconButton
             color="inherit"
             aria-label="toggle drawer"
@@ -249,11 +261,28 @@ const Layout = () => {
             <Logo variant="icon" />
           </Box>
           
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <IconButton color="primary" sx={{ mr: 1 }}>
-              <NotificationBadge badgeContent={3} color="error">
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconButton sx={{ color: 'text.secondary' }}>
+              <SearchIcon />
+            </IconButton>
+            
+            <IconButton color="inherit">
+              <Badge 
+                badgeContent={3} 
+                color="error" 
+                sx={{ 
+                  '& .MuiBadge-badge': { 
+                    top: 4, 
+                    right: 4,
+                    width: 6,
+                    height: 6,
+                    minWidth: 6,
+                    padding: 0
+                  } 
+                }}
+              >
                 <NotificationsIcon />
-              </NotificationBadge>
+              </Badge>
             </IconButton>
             
             <IconButton
@@ -263,10 +292,11 @@ const Layout = () => {
             >
               <Avatar
                 sx={{
-                  bgcolor: theme.palette.primary.main,
-                  width: 40,
-                  height: 40,
+                  bgcolor: theme.palette.primary.dark,
+                  width: 32,
+                  height: 32,
                   fontWeight: 600,
+                  fontSize: '0.875rem'
                 }}
               >
                 {getUserInitials()}
@@ -287,7 +317,9 @@ const Layout = () => {
                     borderRadius: 2,
                     minWidth: 180,
                     overflow: 'visible',
-                    filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.15))',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    backgroundColor: 'background.paper',
                     '&:before': {
                       content: '""',
                       display: 'block',
@@ -299,6 +331,9 @@ const Layout = () => {
                       bgcolor: 'background.paper',
                       transform: 'translateY(-50%) rotate(45deg)',
                       zIndex: 0,
+                      borderLeft: '1px solid',
+                      borderTop: '1px solid',
+                      borderColor: 'divider',
                     },
                   }
                 }
@@ -317,7 +352,7 @@ const Layout = () => {
                 Logout
               </MenuItem>
             </Menu>
-          </Box>
+          </Stack>
         </Toolbar>
       </StyledAppBar>
 
@@ -339,93 +374,67 @@ const Layout = () => {
           )}
         </Box>
         
-        <Divider sx={{ mx: 2, my: 1 }} />
+        <Divider sx={{ opacity: 0.1 }} />
         
-        <List sx={{ pt: 1 }}>
-          {menuItems.map((item, index) => {
-            const isActive = isPathActive(item.path);
-            return (
-              <StyledMenuItem
-                key={item.text}
-                component={Link}
-                to={item.path}
-                active={isActive ? 1 : 0}
-                sx={{
-                  display: !open && !isMobile ? 'flex' : undefined,
-                  justifyContent: !open && !isMobile ? 'center' : undefined,
-                  px: !open && !isMobile ? 0 : undefined,
-                  backgroundColor: isActive ? 'primary.main' : 'transparent',
-                  '&:hover': {
-                    backgroundColor: isActive ? 'primary.main' : 'primary.light20',
-                  }
-                }}
-              >
-                <ListItemIcon 
-                  sx={{ 
-                    color: isActive ? 'white' : 'text.secondary',
-                    minWidth: !open && !isMobile ? 0 : 40,
-                  }}
-                >
-                  {item.icon}
-                </ListItemIcon>
-                {(open || isMobile) && (
-                  <ListItemText 
-                    primary={item.text} 
-                    primaryTypographyProps={{ 
-                      fontWeight: isActive ? 600 : 500,
-                      fontSize: '0.95rem',
-                      color: isActive ? 'white' : 'inherit',
-                    }} 
-                  />
-                )}
-              </StyledMenuItem>
-            );
-          })}
-        </List>
-        
-        <Box sx={{ flexGrow: 1 }} />
-        
-        <Box sx={{ p: 2 }}>
-          <Divider sx={{ my: 1 }} />
-          <StyledMenuItem
-            component="button"
-            onClick={handleLogout}
-            sx={{
-              width: '100%',
-              textAlign: 'left',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: !open && !isMobile ? 'flex' : undefined,
-              justifyContent: !open && !isMobile ? 'center' : undefined,
-              px: !open && !isMobile ? 0 : undefined,
-            }}
-          >
-            <ListItemIcon sx={{ 
-              color: 'text.secondary',
-              minWidth: !open && !isMobile ? 0 : 40,
-            }}>
-              <LogoutIcon />
-            </ListItemIcon>
-            {(open || isMobile) && (
-              <ListItemText 
-                primary="Logout" 
-                primaryTypographyProps={{ 
-                  fontWeight: 500,
-                  fontSize: '0.95rem',
-                }} 
-              />
-            )}
-          </StyledMenuItem>
-        </Box>
+        <Navigation compact={!open && !isMobile} />
       </StyledDrawer>
 
       {/* Main content */}
       <MainContent open={open} isMobile={isMobile}>
         <Toolbar /> {/* Spacer to push content below AppBar */}
-        <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 }, mt: 2 }}>
+        
+        {/* Page header */}
+        <PageHeader>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <PageTitle>{getPageTitle()}</PageTitle>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <FilterButton startIcon={<DateRangeIcon />} endIcon={<FilterIcon />}>
+                Apr 1, 2025 - Apr 11, 2025
+              </FilterButton>
+            </Box>
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Tabs 
+              value={periodValue} 
+              onChange={handlePeriodChange}
+              sx={{ 
+                minHeight: 'auto',
+                '& .MuiTabs-indicator': { 
+                  height: 3,
+                  borderRadius: '3px 3px 0 0' 
+                }
+              }}
+            >
+              <PeriodTab label="MTD" />
+              <PeriodTab label="7D" />
+              <PeriodTab label="30D" />
+              <PeriodTab label="3M" />
+              <PeriodTab label="6M" />
+              <PeriodTab label="12M" />
+            </Tabs>
+            
+            <ButtonGroup variant="outlined" size="small" sx={{ '& .MuiButton-root': { borderColor: alpha(theme.palette.divider, 0.2) } }}>
+              <Button 
+                variant={viewType === 'chart' ? 'contained' : 'outlined'}
+                onClick={() => handleViewChange('chart')}
+              >
+                Chart
+              </Button>
+              <Button 
+                variant={viewType === 'table' ? 'contained' : 'outlined'}
+                onClick={() => handleViewChange('table')}
+              >
+                Table
+              </Button>
+            </ButtonGroup>
+          </Box>
+        </PageHeader>
+        
+        <ContentContainer>
           <Outlet />
-        </Container>
+        </ContentContainer>
       </MainContent>
     </Box>
   );
